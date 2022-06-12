@@ -9,6 +9,8 @@
 
 class Module
 {
+    friend class Loader;
+public:
     enum Mode
     {
         Library, // from library plugin
@@ -16,16 +18,23 @@ class Module
     };
 
     // should override interface
-    virtual Mode mode(){return Library;}
-    virtual std::string id(){return "";}
-    virtual std::map<std::string, std::any> property(){return {};}
+    inline virtual Mode mode(){return Library;}
+    inline virtual std::string id(){return "";}
+    inline virtual std::map<std::string, std::any> property(){return {};}
 
     // interface from network load
-    virtual std::vector<std::string> methods(){return {};}
-    virtual std::any callMethod(const std::string& method, const std::vector<std::any> &){
+    inline virtual std::vector<std::string> methods(){return {};}
+    inline virtual std::any callMethod(const std::string& method, const std::vector<std::any> &){
         return {};
     }
+
+    inline std::string libraryPath() { return path; }
+private:
+    std::string path;
 };
 
 typedef std::shared_ptr<Module> Module_ptr;
 typedef std::list<Module_ptr> Module_ptrs;
+
+#define DEF_MODULE(x) \
+    extern "C" x* DEF_MODULE() {return new x;}

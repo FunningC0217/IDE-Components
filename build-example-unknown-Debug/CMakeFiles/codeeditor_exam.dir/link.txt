@@ -1,1 +1,0 @@
-/usr/bin/g++ -g -rdynamic CMakeFiles/codeeditor_exam.dir/codeeditor.o -o codeeditor_exam  /usr/lib/libQt5Widgets.so.5.15.3 -lIDE-COM::CodeEditor /usr/lib/libQt5Gui.so.5.15.3 /usr/lib/libQt5Core.so.5.15.3 

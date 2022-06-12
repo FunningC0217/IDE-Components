@@ -1,1 +1,0 @@
-/usr/bin/g++ -fPIC -g -shared -Wl,-soname,libframe.so -o libframe.so CMakeFiles/frame.dir/src/loader.cpp.o  /usr/lib/libQt5Core.so.5.15.3 

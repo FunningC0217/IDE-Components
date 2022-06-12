@@ -4,61 +4,100 @@
 #include <memory>
 #include <filesystem>
 #include <iostream>
+#include <dlfcn.h>
 
-class LibraryLoaderPrivate
+typedef Module* (*CreatFunc)();
+namespace platfrom {
+Module_ptr loadModule(const std::string &path)
 {
-    friend class LibraryLoader;
+#ifdef linux
+    dlerror();
+    auto handle = dlopen(path.c_str(), RTLD_LAZY);
+    if (!handle) {
+        std::cerr << "Failed, " << dlerror() << "\n";
+        return nullptr;
+    }
+    CreatFunc ptr = (CreatFunc)dlsym(handle, "DEF_MODULE");
+    if (ptr) return Module_ptr(ptr());
+#elif __WIN32__ || __WIN64__
+#endif
+    return nullptr;
+}
+}
+
+
+
+class LoaderPrivate
+{
+    friend class Loader;
     std::list<std::string> modulePaths;
     Module_ptrs modules;
-    static bool isModule(const std::string &path){
+
+    static bool is_shared(const std::filesystem::directory_entry &entry)
+    {
+        static std::list<std::string> extensions{".so", ".dll"};
+        auto itera = std::find_if(extensions.begin(), extensions.end(), [=](const std::string& val)
+        { return entry.path().extension() == val;});
+        if (entry.is_regular_file() && itera != extensions.end()){
+            return true;
+        }
+        return false;
+    }
+
+    static Module_ptr module(const std::string &path)
+    {
         std::filesystem::directory_entry entry(path);
         if (!entry.exists())
-            return false;
-        std::cout << "is_block_file: " << entry.is_block_file()
-                  << "is_regular_file: " << entry.is_regular_file()
-                  << "is_character_file: " << entry.is_character_file()
-                  << "is_directory: " << entry.is_directory()
-                  << "is_fifo: " << entry.is_fifo()
-                  << "is_socket: " << entry.is_socket()
-                  << "is_symlink: " << entry.is_symlink()
-                  << "is_other:" << entry.is_other();
-        return false;
+            return nullptr;
+        if (is_shared(entry)) {
+           return platfrom::loadModule(entry.path().c_str());
+        }
+        return nullptr;
     }
 };
 
-LibraryLoader::LibraryLoader()
-    : d (new LibraryLoaderPrivate)
+Loader::Loader()
+    : d (new LoaderPrivate)
 {
 
 }
 
-LibraryLoader::~LibraryLoader()
+Loader::~Loader()
 {
     if (d)
         delete d;
 }
 
-void LibraryLoader::setModulePaths(const std::list<std::string> &paths)
+void Loader::setModulePaths(const std::list<std::string> &paths)
 {
     d->modulePaths = paths;
 }
 
-void LibraryLoader::addModulePath(const std::string &path)
+void Loader::addModulePath(const std::string &path)
 {
     d->modulePaths.push_back(path);
 }
 
-void LibraryLoader::delModulePath(const std::string &path)
+void Loader::delModulePath(const std::string &path)
 {
     d->modulePaths.remove(path);
 }
 
-Module_ptrs LibraryLoader::modules()
+Module_ptrs Loader::modules()
 {
+    for (auto& path : d->modulePaths) {
+        for (auto& p : std::filesystem::directory_iterator(path)) {
+            Module_ptr instance = d->module(p.path());
+            if(instance) {
+                instance->path = p.path();
+                d->modules.push_back(std::move(instance));
+            }
+        }
+    }
     return d->modules;
 }
 
-std::list<std::string> LibraryLoader::modulePaths()
+std::list<std::string> Loader::modulePaths()
 {
     return d->modulePaths;
 }

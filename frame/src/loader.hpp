@@ -8,13 +8,13 @@
 #include <list>
 
 
-class LibraryLoaderPrivate;
-class LibraryLoader
+class LoaderPrivate;
+class Loader
 {
-    LibraryLoaderPrivate *const d;
+    LoaderPrivate *const d;
 public:
-    LibraryLoader();
-    virtual ~LibraryLoader();
+    Loader();
+    virtual ~Loader();
     void setModulePaths(const std::list<std::string> &paths);
     std::list<std::string> modulePaths();
     void addModulePath(const std::string &path);
