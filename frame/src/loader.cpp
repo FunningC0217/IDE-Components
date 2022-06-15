@@ -1,6 +1,5 @@
 #include "loader.hpp"
 
-#include <QLibrary>
 #include <memory>
 #include <filesystem>
 #include <iostream>
