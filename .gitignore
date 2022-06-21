@@ -71,6 +71,7 @@ Thumbs.db
 *.dll
 *.exe
 
-build-frame-unknown-Debug
+build-*/
 frame/3rdparty/libelfin/examples
 frame/3rdparty/libelfin/test
+*CMakeLists.tet.user

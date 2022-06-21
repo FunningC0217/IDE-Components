@@ -9,28 +9,49 @@
 #include <map>
 #include <iostream>
 
-namespace std {
+namespace osgi {
 
-struct stringlist : public list<string>
+struct stringlist;
+struct string : public std::string
+{
+    string(){}
+    string(const std::string &str) : std::string(str) {}
+    string(const char *str) : std::string(str ){}
+    stringlist split(const char ch = ' ');
+};
+
+template<typename T>
+struct list : public std::list<T>
+{
+    typedef std::list<T> parentType;
+    bool contains(const T &v) {
+        return std::find_if(parentType::begin(), parentType::end(),
+                            [&](auto &val){
+            return val == v;
+        }) == parentType::end() ? false : true;
+    }
+
+    void push_back(const osgi::string &str)
+    {
+        parentType::push_back(str);
+    }
+};
+
+struct stringlist : public osgi::list<osgi::string>
 {
     stringlist(){}
 
-    stringlist(const string &str) {
-        string temp;
-        for (auto &ch : str) {
-            if (ch == ' ') {
-                this->push_back(temp);
-                temp.clear();
-            } else {
-                temp += ch;
-            }
+    stringlist(int argc, char **argv) {
+        for (int i = 0; i < argc; i++) {
+            push_back(osgi::string(argv[i]));
         }
     }
 
-    stringlist(const char **argv) {
-        for (int i = 0; i < strlen((char*)argv); i++) {
-            this->push_back(string(argv[i]));
-        }
+    stringlist(const std::list<std::string> strlist) {
+        std::for_each(strlist.begin(), strlist.end(),
+                      [&](auto val){
+            operator<<(val);
+        });
     }
 
     stringlist &operator << (const std::string &str) {
@@ -43,15 +64,15 @@ struct stringlist : public list<string>
         return *this;
     }
 
-    stringlist &operator << (const std::stringlist &strlist) {
+    stringlist &operator << (const osgi::stringlist &strlist) {
         for (auto val : strlist) {
             push_back(val);
         }
         return *this;
     }
 
-    std::string toString() const {
-        std::string temp;
+    osgi::string toString() const {
+        osgi::string temp;
         for (auto val : *this) {
             if (!temp.empty()) {
                 temp.push_back(' ');
@@ -60,68 +81,154 @@ struct stringlist : public list<string>
         }
         return temp;
     }
+
+    bool contains(const std::string &str) {
+        return std::find_if(begin(), end(), [&](auto val){
+            if (str == val)
+                return true;
+            return false;
+        }) == end() ? false : true;
+    }
+
 };
 
-int to_list(const std::string &);
+template<typename K, typename V>
+struct map : public std::map<K, V>
+{
+    typedef std::map<K, V> parentType;
+    std::list<K> keys(){
+        K result;
+        std::for_each(parentType::begin(),
+                      parentType::end(),
+                      [&](std::pair<K, V> val){
+            result << val.first;
+        });
+        return result;
+    }
+};
+
+std::ostream &operator <<(std::ostream &out, const stringlist &list)
+{
+    out << "stringlist(";
+    auto itera=  list.begin();
+    while (itera != list.end()) {
+        out << *itera;
+        itera ++;
+        if (itera != list.end())
+            out << ",";
+    }
+    out << ")";
+    return out;
+};
+
+stringlist string::split(const char ch)
+{
+    stringlist result;
+    string temp;
+    for (auto &val : *this) {
+        if (val == ch) {
+            result.push_back(temp);
+            temp.clear();
+        } else {
+            temp += ch;
+        }
+    }
+    return result;
 }
 
+}
 
 struct CmdOption
 {
-    std::string option;
-    std::string optionWhole;
-    std::string describe;
-    std::string detailed;
-public:
-    CmdOption(const std::string &option,
-              const std::string &optionWhole,
-              const std::string &describe,
-              const std::string &detailed)
+    osgi::string option;
+    osgi::string optionWhole;
+    osgi::string describe;
+    osgi::string detailed;
+    CmdOption(const osgi::string &option,
+              const osgi::string &optionWhole,
+              const osgi::string &describe,
+              const osgi::string &detailed)
         : option (option)
         , optionWhole (optionWhole)
         , describe (describe)
         , detailed (detailed) {}
+    bool operator < (const CmdOption &option){
+        return CmdOption::option < option.option;
+    }
 };
 
-typedef std::function<void(const std::stringlist &)> CmdOptionFunc;
+bool operator < (const CmdOption &t1, const CmdOption &t2){
+    return t1.option < t2.option;
+}
+
+typedef std::function<void(const osgi::stringlist &)> CmdOptionFunc;
+
+
+struct CmdOptionContainer : public osgi::map<CmdOption, CmdOptionFunc>
+{
+    typedef osgi::map<CmdOption, CmdOptionFunc> parentType;
+    bool containOption(const osgi::string &str) {
+        return std::find_if(begin(), end(), [=](std::pair<CmdOption, CmdOptionFunc> val){
+            if (str == val.first.option || str == val.first.optionWhole)
+                return true;
+            return false;
+        }) == end()? false : true;
+    }
+
+    CmdOptionFunc value(const osgi::string &str) {
+        auto itera = begin();
+        while (itera != end()) {
+            if (str == itera->first.option
+                    || str == itera->first.optionWhole)
+                return itera->second;
+            itera ++;
+        }
+        return nullptr;
+    }
+};
+
+struct CmdOptionArgs : public osgi::map<std::string, osgi::stringlist>
+{
+
+};
 
 struct CmdParse
 {
-    std::map<CmdOption, CmdOptionFunc> optionMap;
-    std::map<std::string, std::stringlist> optionParseArgs;
-    std::stringlist args;
+    CmdOptionContainer optionFuncs;
+    CmdOptionArgs optionArgs;
+    osgi::stringlist sourceArgs;
 public:
-    CmdParse(int argc, const char **argv)
-        : args (doSplitArgs(std::stringlist(argv))) {
-        (void)(argc);
+    CmdParse(int argc, char **argv)
+        : sourceArgs (osgi::stringlist(argc, argv)) {
     }
 
-    std::stringlist doSplitArgs(const std::stringlist &args) {
-        std::stringlist result;
-        std::string optionKey;
-        std::stringlist optionString;
-        for (auto val : args) {
-            auto findRes = std::find_if(optionMap.begin(), optionMap.end(),
-                          [&](decltype (optionMap)::iterator itera) {
-                    if (val == itera->first.option || val == itera->first.optionWhole) {return itera;}
-                    return optionMap.end();
-            });
-            if (findRes != optionMap.end()) {
-                result << optionString;
-                optionParseArgs[optionKey] = optionString;
-                optionKey = val;
-                optionString.clear();
-            } else if (!optionKey.empty()){
-                optionString << val;
-                break;
+    void doSplitArgs(const osgi::stringlist &args) {
+        if (args.empty())
+            return;
+
+        auto itera = args.begin();
+        osgi::string optionKey;
+        while (itera != args.end()) {
+            if (optionFuncs.containOption(*itera)) {
+                if (!optionKey.empty()) {
+                    optionKey.clear();
+                    continue;
+                } else {
+                    optionKey = *itera;
+                    itera ++; continue;
+                }
             }
-            val = val.erase();
+            if (!optionKey.empty()) {
+                optionArgs[optionKey] << *itera;
+            } else {
+
+            }
+            itera ++;
         }
-        return result;
     }
 
-    CmdOptionFunc operator[](const std::string &optionKey) {
-        for (auto val : optionMap) {
+    CmdOptionFunc findCallBack(const std::string &optionKey) {
+        for (auto val : optionFuncs) {
             if (val.first.option == optionKey
                     || val.first.optionWhole == optionKey)
             {
@@ -129,7 +236,7 @@ public:
             }
         }
 
-        return [=](const std::stringlist &optionArgs) {
+        return [=](const osgi::stringlist &optionArgs) {
             (void)(optionArgs);
             std::cout << "option: " << optionKey
                       << "No callable parameters are found. "
@@ -139,13 +246,16 @@ public:
         };
     }
 
-    void call(const std::string &optionAtOne)
-    {
-        for (auto val : args) {
+    void doParse() {
+        doSplitArgs(sourceArgs);
+        for (auto val : optionArgs) {
+            if (optionFuncs.containOption(val.first))
+                optionFuncs.value(val.first)(val.second);
         }
     }
 
-    void doParse() {
+    CmdOptionFunc &operator[](const CmdOption &option) {
+        return optionFuncs[option];
     }
 };
 

@@ -1,4 +1,4 @@
-#include "../src/Bundle.hpp"
+#include "../src/frame/Bundle.hpp"
 
 class Bundle_Bob : public osgi::Bundle
 {
