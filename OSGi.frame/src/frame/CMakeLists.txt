@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(HPP
+    Container.hpp
+    CmdParse.hpp
     Module.hpp
     Service.hpp
     Bundle.hpp

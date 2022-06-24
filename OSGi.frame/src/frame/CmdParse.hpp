@@ -1,142 +1,9 @@
-#ifndef CMDPARSE_H
-#define CMDPARSE_H
+#ifndef CMDPARSE_HPP
+#define CMDPARSE_HPP
 
-#include <cstring>
-#include <string>
-#include <list>
-#include <algorithm>
+#include "Container.hpp"
+
 #include <functional>
-#include <map>
-#include <iostream>
-
-namespace osgi {
-
-struct stringlist;
-struct string : public std::string
-{
-    string(){}
-    string(const std::string &str) : std::string(str) {}
-    string(const char *str) : std::string(str ){}
-    stringlist split(const char ch = ' ');
-};
-
-template<typename T>
-struct list : public std::list<T>
-{
-    typedef std::list<T> parentType;
-    bool contains(const T &v) {
-        return std::find_if(parentType::begin(), parentType::end(),
-                            [&](auto &val){
-            return val == v;
-        }) == parentType::end() ? false : true;
-    }
-
-    void push_back(const osgi::string &str)
-    {
-        parentType::push_back(str);
-    }
-};
-
-struct stringlist : public osgi::list<osgi::string>
-{
-    stringlist(){}
-
-    stringlist(int argc, char **argv) {
-        for (int i = 0; i < argc; i++) {
-            push_back(osgi::string(argv[i]));
-        }
-    }
-
-    stringlist(const std::list<std::string> strlist) {
-        std::for_each(strlist.begin(), strlist.end(),
-                      [&](auto val){
-            operator<<(val);
-        });
-    }
-
-    stringlist &operator << (const std::string &str) {
-        push_back(str);
-        return *this;
-    }
-
-    stringlist &operator << (const char *str) {
-        push_back(str);
-        return *this;
-    }
-
-    stringlist &operator << (const osgi::stringlist &strlist) {
-        for (auto val : strlist) {
-            push_back(val);
-        }
-        return *this;
-    }
-
-    osgi::string toString() const {
-        osgi::string temp;
-        for (auto val : *this) {
-            if (!temp.empty()) {
-                temp.push_back(' ');
-            }
-            temp += val;
-        }
-        return temp;
-    }
-
-    bool contains(const std::string &str) {
-        return std::find_if(begin(), end(), [&](auto val){
-            if (str == val)
-                return true;
-            return false;
-        }) == end() ? false : true;
-    }
-
-};
-
-template<typename K, typename V>
-struct map : public std::map<K, V>
-{
-    typedef std::map<K, V> parentType;
-    std::list<K> keys(){
-        K result;
-        std::for_each(parentType::begin(),
-                      parentType::end(),
-                      [&](std::pair<K, V> val){
-            result << val.first;
-        });
-        return result;
-    }
-};
-
-std::ostream &operator <<(std::ostream &out, const stringlist &list)
-{
-    out << "stringlist(";
-    auto itera=  list.begin();
-    while (itera != list.end()) {
-        out << *itera;
-        itera ++;
-        if (itera != list.end())
-            out << ",";
-    }
-    out << ")";
-    return out;
-};
-
-stringlist string::split(const char ch)
-{
-    stringlist result;
-    string temp;
-    for (auto &val : *this) {
-        if (val == ch) {
-            result.push_back(temp);
-            temp.clear();
-        } else {
-            temp += ch;
-        }
-    }
-    return result;
-}
-
-}
 
 struct CmdOption
 {
@@ -162,7 +29,6 @@ bool operator < (const CmdOption &t1, const CmdOption &t2){
 }
 
 typedef std::function<void(const osgi::stringlist &)> CmdOptionFunc;
-
 
 struct CmdOptionContainer : public osgi::map<CmdOption, CmdOptionFunc>
 {
@@ -259,4 +125,4 @@ public:
     }
 };
 
-#endif // CMDPARSE_H
+#endif // CMDPARSE_HPP

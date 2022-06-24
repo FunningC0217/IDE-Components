@@ -1,22 +1,50 @@
-#pragma onec
-
 #include "CmdParse.hpp"
+#include "CppParse.hpp"
 
 int main(int argc, char *argv[])
 {
     CmdParse parse(argc, argv);
 
-    parse[{"-a","-archive", "", ""}] = [&](auto args) -> void
+    CppParse cppParse;
+
+    parse[{"-s", "--srouces", "", ""}] = [&](const osgi::stringlist &args)
     {
-        std::cout << args << std::endl;
+        std::cout << "-s " << args << std::endl;
+        cppParse.setSources(args);
     };
 
-    parse[{"-b","-build", "", ""}] = [&](auto args) -> void
+    parse[{"-t", "--type", "", ""}] = [&](const osgi::stringlist &args)
     {
-        std::cout << args << std::endl;
+        std::cout << "-t " << args << std::endl;
+    };
+
+    parse[{"-r", "--root", "OSGi.Frame inclue root path", ""}]
+    = [&](const osgi::stringlist &args)
+    {
+        if (args.size() > 0) {
+            std::cout << "-r " << args.front() << std::endl;
+            cppParse.setWorkdir(args.front());
+        }
+    };
+
+    parse[{"-w", "--workdir", "", ""}] = [&](const osgi::stringlist &args)
+    {
+        if (args.size() > 0) {
+            std::cout << "-w " << args.front() << std::endl;
+            cppParse.setWorkdir(args.front());
+        }
+    };
+
+    parse[{"-j", "-jobNumber", "", ""}] = [&](const osgi::stringlist &args){
+        if (args.size() > 0) {
+            std::cout << "-j " << std::stoi(args.front()) << std::endl;
+            cppParse.setMaxThread(std::stoi(args.front()));
+        }
     };
 
     parse.doParse();
+
+    cppParse.doParse();
 
     return 0;
 }
