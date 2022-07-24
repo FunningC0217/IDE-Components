@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 7.0.2, 2022-06-25T03:14:39. -->
+<!-- Written by QtCreator 7.0.2, 2022-07-24T20:02:17. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -297,7 +297,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">archvice</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">CMakeProjectManager.CMakeRunConfiguration.archvice</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">archvice</value>
-    <value type="QString" key="RunConfiguration.Arguments">-j 16 -t OSGi.Service -w /home/funning/workspace/IDE-Components/OSGi.frame/src/frame -s Bundle.hpp CmdParse.hpp LifeCycle.cpp Module.hpp CMakeLists.txt Container.hpp LifeCycle.hpp Service.hpp Bundle.hpp CmdParse.hpp LifeCycle.cpp Module.hpp CMakeLists.txt Container.hpp LifeCycle.hpp Service.hpp Bundle.hpp CmdParse.hpp LifeCycle.cpp Module.hpp CMakeLists.txt Container.hpp LifeCycle.hpp Service.hpp</value>
+    <value type="QString" key="RunConfiguration.Arguments">-j 16 -t OSGi.Service -w /home/funning/workspace/IDE-Components/OSGi.frame/example -s module_bob.cpp module_bob.hpp</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>
