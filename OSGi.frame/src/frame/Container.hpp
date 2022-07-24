@@ -17,7 +17,7 @@ struct string : public std::string
 {
     inline string(){}
     inline string(const std::string &str) : std::string(str) {}
-    inline string(const char *str) : std::string(str ) {}
+    inline string(const char *str) : std::string(str) {}
     stringlist split(const char ch = ' ');
 };
 
